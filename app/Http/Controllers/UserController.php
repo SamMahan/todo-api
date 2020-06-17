@@ -5,6 +5,7 @@
     use Illuminate\Support\Facades\Hash;
     use Illuminate\Http\Request;
     use App\User;
+    use App\Http\Resources\User as UserResource;
 
     class UserController extends Controller
     {
@@ -13,6 +14,35 @@
          //  $this->middleware('auth:api');
        }
 
+       public function create(Request $request) 
+       {
+         $this->validate($request, [
+          'email' => 'required',
+          'password' => 'required',
+          'name' => 'required',
+         ]);
+
+         $salt = "lol it's salt";
+         $storedPassword = $this->generatePasswordString($request->input('password'), $salt);
+         $input = [
+           'email' => $request->input('email'),
+           'name' => $request->input('name')
+         ];
+          $user = new User;
+          $user->fill($input);
+          $user->password = $storedPassword;
+          $user->salt = $salt;
+
+          $user->save();
+          $apiKey = $this->generateRandomString();
+          $apiKey = "{$user->id} {$apiKey}"; //user id gives us the sureness of uniqueness
+          $user->api_token = $apiKey;  
+          $user->save();
+          return (new UserResource($user))->additional(['meta' => [
+            'apiToken' => $apiKey,
+          ]]);  
+        }
+        
        /**
         * Display a listing of the resource.
         *
@@ -30,8 +60,12 @@
             if ($request->input('password') == $user->password) {
               $apiKey = $this->generateRandomString();
               $apiKey = "{$user->id} {$apiKey}"; //user id gives us the sureness of uniqueness
-              User::where('email', $request->input('email'))->update(['api_token' => "$apiKey"]);
-              return response()->json(['status' => 'success','api_token' => $apiKey]);
+              $user = User::where('email', $request->input('email'));
+              $user->update(['api_token' => "$apiKey"]);
+              $user->save();
+              return (new UserResource($user))->additional(['meta' => [
+                'api_token' => $apiKey,
+              ]]); 
             } else {
               return response()->json(['status' => 'fail'],401);
             }
@@ -49,7 +83,8 @@
        public function getCurrent(Request $request)
        {
         //  return response()->json(['lol' => 'lol']);
-         return $request->user();
+
+        return (new UserResource($request->user()));
        }
 
        /**
@@ -63,9 +98,27 @@
             'email' => 'required',
             'name' => 'required'
           ]);
-            $user = $request->user();
-            $user->fill($request->input());
-            $user->save();
+          $input = $request->input();
+          $user = $request->user();
+          if (array_key_exists('password', $input)){
+            $salt = "lol it's salt";
+            $storedPassword = $this->generatePasswordString($request->input('password'), $salt);
+            $apiKey = $this->generateRandomString();
+            $apiKey = "{$user->id} {$apiKey}"; //user id gives us the sureness of uniqueness
+            $user->salt = $salt;
+            $user->password = $storedPassword;
+            $user->api_token = $apiKey;
+          }
+          $user->fill($request->input());
+          $user->save();
+
+          $resource = (new UserResource($user));
+          if (array_key_exists('password', $input)){
+            return $resource->additional(['meta' => [
+              'api_token' => $apiKey,
+            ]]);
+          }
+          return $resource;
        }
 
        private function generateRandomString()
@@ -75,6 +128,11 @@
             $randomString .= chr(random_int(61, 79)); //other characters seem to break request header data
           }
           return $randomString;
+       }
+
+       private function generatePasswordString($password, $salt)
+       {
+        return Hash::make($password.$salt);
        }
     }    
 ?>

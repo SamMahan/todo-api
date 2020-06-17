@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UserApiTokenUpgrade extends Migration
+class DodoUpgrades extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,9 @@ class UserApiTokenUpgrade extends Migration
      */
     public function up()
     {
-        Schema::table('users', function(Blueprint $table) {
-            $table->string('api_token', 45)->nullable();
+        Schema::table('to_dos', function(Blueprint $table) {
+            $table->string('label', 100)->change();
+            $table->string('details', 150)->nullable()->change();
         });
     }
 
@@ -25,8 +26,9 @@ class UserApiTokenUpgrade extends Migration
      */
     public function down()
     {
-        Schema::table('users', function(Blueprint $table) {
-            $table->dropColumn('api_token');
+        Schema::table('to_dos', function(Blueprint $table) {
+            $table->string('label', 20)->change();
+            $table->string('details', 20)->change();
         });
     }
 }

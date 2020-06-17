@@ -35,6 +35,9 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
+        error_log(print_r(get_class($this->auth), true));
+        error_log("GUARD");
+        error_log($guard);
         if ($this->auth->guard($guard)->guest()) {
             return response('Unauthorized.', 401);
         }

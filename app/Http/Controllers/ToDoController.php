@@ -4,18 +4,17 @@
     use App\Http\Controllers\Controller;
     use Illuminate\Support\Facades\Hash;
     use Illuminate\Http\Request;
-    use App\Product;
-    use App\ShopList;
+    use App\ToDo;
+    use App\Http\Resources\ToDo as ToDoResource;
 
     class ToDoController extends Controller
     {
       public function __construct()
        {
-         //  $this->middleware('auth:api');
        }
 
        /**
-        * create a product resource
+        * create a todo resource
         *
         * @return \Illuminate\Http\Response
         */
@@ -24,15 +23,16 @@
             $this->validate($request, [
                 'label' => 'required',
                 'details' => 'required',
-                'is_checked' => 'required'
             ]);
-            $input = $request->input();
-            $input['user_id'] = $request->user->id;
 
-            $shopList = new ShopList;
-            $shopList->fill($request->input());
-            $shopList->save();
-            return response()->json($shopList);
+            $input = $request->input();
+            $input['is_checked'] = false;
+            $input['user_id'] = $request->user()->id;
+            $input['due_time'] = date('Y-m-d H:i:s');
+            $todo = new ToDo;
+            $todo->fill($input);
+            $todo->save();
+            return new ToDoResource($todo);
        }
 
         /**
@@ -40,9 +40,12 @@
         *
         * @return \Illuminate\Http\Response
         */
-        public function delete(Request $request, $shopListId)
+        public function delete(Request $request, $todoId)
         {
-            ShopList::destroy($shopListId);
+            $todo = ToDo::where([['userId', '=', $request->user()->id], ['id', '=', $todoId]]);
+            if (!$todo) return response('', 403);
+
+            ToDo::destroy($todoId);
             return response('', 200);
         }
 
@@ -51,9 +54,11 @@
         *
         * @return \Illuminate\Http\Response
         */
-        public function getAll(Request $request)
+        public function get(Request $request)
         {
-            return ShopList::all();
+            $user = $request->user();
+            $todos = ToDo::where([['user_id', '=', $user->id]])->get();
+            return ToDoResource::collection($todos);
         }
     }    
 ?>

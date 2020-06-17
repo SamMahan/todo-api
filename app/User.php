@@ -12,6 +12,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 {
     use Authenticatable, Authorizable;
 
+    
     // /**
     //  * The attributes that are mass assignable.
     //  *

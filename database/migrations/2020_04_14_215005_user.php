@@ -15,17 +15,17 @@ class User extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             
-            $table->string('name', 20);
-            $table->string('email', 20);
-            $table->string('password', 45);
-            $table->string('salt', 45);
+            $table->string('name', 45);
+            $table->string('email', 45);
+            $table->string('password', 100);
+            $table->string('salt', 50);
             
             $table->id();
             $table->timestamps();
             $table->softDeletes();
 
-            // $table->foreignId('user_id');
-            // $table->foreign('user_id')->references('id')->on('users');
+            // $table->foreignId('userId');
+            // $table->foreign('userId')->references('id')->on('users');
         });
     }
 
