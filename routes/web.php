@@ -10,7 +10,9 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
-
+$router->post('/test', function() use ($router) {
+    return "hey! I'm here";
+});
 $router->post('/user/login', ['uses' => 'UserController@login']);
 $router->post('/user', ['uses' => 'UserController@create']);
 
